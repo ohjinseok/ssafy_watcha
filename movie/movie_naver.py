@@ -23,19 +23,20 @@ def get_movie_naver(movieNm):
 
 def saveCsvMN(movieNaver):
     movieCd = get_movieCd(movieNaver)
-    exists = os.path.isfile('movie_naver.csv')
-    if not exists:
+    exists = os.path.exists('movie_naver.csv')
+
+    if exists:
         with open('movie_naver.csv', 'r', newline='', encoding = 'utf-8') as csvfile:
             csvReader = csv.DictReader(csvfile)
-            next(csvReader)
-            movie_list = [row['movie_code'] for row in csvReader]
+            data = [row for row in csvReader]
         
-    if get_movieCd(movieNaver) not in movie_list:  
-        with open('movie_naver.csv', 'a', newline='', encoding = 'utf-8') as csvfile:
-                fieldnames = ['movie_code', 'image_url', 'rate']
-                csvWriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                csvWriter.writeheader()
-                csvWriter.writerow({'movie_code': movieCd, 'image_url': movieNaver['image'], 'rate': movieNaver['userRating']})
+    with open('movie_naver.csv', 'w', newline='', encoding = 'utf-8') as csvfile:
+        fieldnames = ['movie_code', 'image_url', 'htlink', 'rate']
+        csvWriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        csvWriter.writeheader()
+        for row in data:
+                csvWriter.writerow(row)
+        csvWriter.writerow({'movie_code': movieCd, 'image_url': movieNaver['image'], 'htlink': movieNaver['link'], 'rate': movieNaver['userRating']})
 
 def get_image(movieNaver):
     res = requests.get(movieNaver['image'], stream=True)
@@ -52,6 +53,15 @@ def get_movieCd(movieNaver):
                 movieCd = row['movie_code']
     return movieCd
 
+def get_naver_csv():
+    movie_list = []
+    with open('boxoffice.csv', 'r', newline='', encoding = 'utf-8') as csvfile:
+        csvReader = csv.DictReader(csvfile)
+        movie_list = [row['title'] for row in csvReader]
+
+    for i in movie_list:
+        saveCsvMN(get_movie_naver(i))
+        get_image(get_movie_naver(i))
+
 if __name__ == '__main__':
-        saveCsvMN(get_movie_naver('말모이'))
-        get_image(get_movie_naver('말모이'))
+    get_naver_csv()
